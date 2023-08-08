@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>assembler.zig - source view</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAPNJREFUeNpi/P//PwMlgOXHUjly9E0G4hwgZmQiQZMqEK8H4v9QzUEgQSaoADK+zhH9iAGL+C0gDoAaNg9mGLoLfgA1awK9hS9gzgJxA9RQBmQDrgMxJzRMGKE4HYj/Ial5A8QmQLwCJoBsgBYW2+TR1ChDaWt4LOBxKsi/VUh8XiD+gq4IVyzwQAMJBoKwacZlAB8Qf0bi96IZhtOAe1D6LpqaEiz6rmEzQAeIzwGxCJpieFqApo/vQKyJboAaEBsAsSEupwI1MwKjGBTVHOhegMX5UajYRqiBjMgYmj400cVh0XgTiKdC0zhJgJHS7AwQYABm9EAdCKrEfAAAAABJRU5ErkJggg=="/>
+    <style>
+      body{
+        font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      pre > code {
+        display: block;
+        overflow: auto;
+        line-height: normal;
+        margin: 0em;
+      }
+      .tok-kw {
+          color: #333;
+          font-weight: bold;
+      }
+      .tok-str {
+          color: #d14;
+      }
+      .tok-builtin {
+          color: #005C7A;
+      }
+      .tok-comment {
+          color: #545454;
+          font-style: italic;
+      }
+      .tok-fn {
+          color: #900;
+          font-weight: bold;
+      }
+      .tok-null {
+          color: #005C5C;
+      }
+      .tok-number {
+          color: #005C5C;
+      }
+      .tok-type {
+          color: #458;
+          font-weight: bold;
+      }
+      pre {
+        counter-reset: line;
+      }
+      pre .line:before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        padding-right: 1em;
+        width: 2em;
+        text-align: right;
+        color: #999;
+      }
+      
+      .line {
+        width: 100%;
+        display: inline-block;
+      }
+      .line:target {
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background: #fafafa;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body{
+            background:#222;
+            color: #ccc;
+        }
+        pre > code {
+            color: #ccc;
+            background: #222;
+            border: unset;
+        }
+        .line:target {
+            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
+            background: #333;
+        }
+        .tok-kw {
+            color: #eee;
+        }
+        .tok-str {
+            color: #2e5;
+        }
+        .tok-builtin {
+            color: #ff894c;
+        }
+        .tok-comment {
+            color: #aa7;
+        }
+        .tok-fn {
+            color: #B1A0F8;
+        }
+        .tok-null {
+            color: #ff8080;
+        }
+        .tok-number {
+            color: #ff8080;
+        }
+        .tok-type {
+            color: #68f;
+        }
+      }
+    </style>
+</head>
+<body>
+<pre><code><span class="line" id="L1"><span class="tok-kw">const</span> mem = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>).mem;</span>
+<span class="line" id="L2"></span>
+<span class="line" id="L3"><span class="tok-kw">const</span> parser = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;parser/main.zig&quot;</span>);</span>
+<span class="line" id="L4"></span>
+<span class="line" id="L5"><span class="tok-kw">pub</span> <span class="tok-kw">const</span> Error = <span class="tok-kw">error</span>{</span>
+<span class="line" id="L6">    LabelNotResolved,</span>
+<span class="line" id="L7">};</span>
+<span class="line" id="L8"></span>
+<span class="line" id="L9"><span class="tok-comment">/// Assemble a single instruction.</span></span>
+<span class="line" id="L10"><span class="tok-comment">/// Any labels must be resolved first!</span></span>
+<span class="line" id="L11"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">assemble_instruction</span>(inst: parser.instruction.Instruction) Error!<span class="tok-type">u10</span> {</span>
+<span class="line" id="L12">    <span class="tok-kw">var</span> memory = <span class="tok-kw">switch</span> (inst.data) {</span>
+<span class="line" id="L13">        .Empty =&gt; <span class="tok-number">0</span>,</span>
+<span class="line" id="L14">        .Number =&gt; inst.data.Number,</span>
+<span class="line" id="L15">        .Label =&gt; <span class="tok-kw">return</span> <span class="tok-kw">error</span>.LabelNotResolved,</span>
+<span class="line" id="L16">    };</span>
+<span class="line" id="L17">    memory += inst.operation.op_code();</span>
+<span class="line" id="L18">    <span class="tok-kw">return</span> memory;</span>
+<span class="line" id="L19">}</span>
+<span class="line" id="L20"></span>
+<span class="line" id="L21"><span class="tok-comment">/// Assemble all the instructions in a parser.</span></span>
+<span class="line" id="L22"><span class="tok-comment">/// Any labels must be resolved first!</span></span>
+<span class="line" id="L23"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">assemble_parser</span>(par: parser.Parser) Error![<span class="tok-number">100</span>]<span class="tok-type">u10</span> {</span>
+<span class="line" id="L24">    <span class="tok-kw">var</span> memory = [<span class="tok-number">1</span>]<span class="tok-type">u10</span>{<span class="tok-number">0</span>} ** <span class="tok-number">100</span>;</span>
+<span class="line" id="L25"></span>
+<span class="line" id="L26">    <span class="tok-kw">for</span> (par.parsed[<span class="tok-number">0</span>..par.n_parsed], <span class="tok-number">0</span>..) |inst, index| {</span>
+<span class="line" id="L27">        memory[index] = <span class="tok-kw">try</span> assemble_instruction(inst);</span>
+<span class="line" id="L28">    }</span>
+<span class="line" id="L29"></span>
+<span class="line" id="L30">    <span class="tok-kw">return</span> memory;</span>
+<span class="line" id="L31">}</span>
+<span class="line" id="L32"></span>
+<span class="line" id="L33"><span class="tok-kw">pub</span> <span class="tok-kw">const</span> FromStrError = Error || parser.Error;</span>
+<span class="line" id="L34"></span>
+<span class="line" id="L35"><span class="tok-comment">/// Parse the string and assemble the instructions.</span></span>
+<span class="line" id="L36"><span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">assemble_str</span>(str: []<span class="tok-kw">const</span> <span class="tok-type">u8</span>) FromStrError![<span class="tok-number">100</span>]<span class="tok-type">u10</span> {</span>
+<span class="line" id="L37">    <span class="tok-kw">var</span> par = <span class="tok-kw">try</span> parser.Parser.from_str(str);</span>
+<span class="line" id="L38">    <span class="tok-kw">try</span> par.resolve_labels();</span>
+<span class="line" id="L39">    <span class="tok-kw">return</span> assemble_parser(par);</span>
+<span class="line" id="L40">}</span>
+<span class="line" id="L41"></span>
+<span class="line" id="L42"><span class="tok-kw">test</span> {</span>
+<span class="line" id="L43">    <span class="tok-kw">const</span> testing = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>).testing;</span>
+<span class="line" id="L44"></span>
+<span class="line" id="L45">    <span class="tok-kw">const</span> parser_1 = <span class="tok-kw">comptime</span> par_block: {</span>
+<span class="line" id="L46">        <span class="tok-kw">var</span> par = parser.Parser{</span>
+<span class="line" id="L47">            .n_parsed = <span class="tok-number">3</span>,</span>
+<span class="line" id="L48">            .parsed = parsed_block: {</span>
+<span class="line" id="L49">                <span class="tok-kw">var</span> parsed: [<span class="tok-number">100</span>]parser.instruction.Instruction = <span class="tok-null">undefined</span>;</span>
+<span class="line" id="L50">                parsed[<span class="tok-number">0</span>] = parser.instruction.Instruction{</span>
+<span class="line" id="L51">                    .label = <span class="tok-str">&quot;loop&quot;</span>,</span>
+<span class="line" id="L52">                    .operation = .IN,</span>
+<span class="line" id="L53">                    .data = .Empty,</span>
+<span class="line" id="L54">                };</span>
+<span class="line" id="L55">                parsed[<span class="tok-number">1</span>] = parser.instruction.Instruction{</span>
+<span class="line" id="L56">                    .label = <span class="tok-str">&quot;bp&quot;</span>,</span>
+<span class="line" id="L57">                    .operation = .BR,</span>
+<span class="line" id="L58">                    .data = .{ .Label = <span class="tok-str">&quot;loop&quot;</span> },</span>
+<span class="line" id="L59">                };</span>
+<span class="line" id="L60">                parsed[<span class="tok-number">2</span>] = parser.instruction.Instruction{</span>
+<span class="line" id="L61">                    .label = <span class="tok-null">null</span>,</span>
+<span class="line" id="L62">                    .operation = .BR,</span>
+<span class="line" id="L63">                    .data = .{ .Label = <span class="tok-str">&quot;bp&quot;</span> },</span>
+<span class="line" id="L64">                };</span>
+<span class="line" id="L65">                <span class="tok-kw">break</span> :parsed_block parsed;</span>
+<span class="line" id="L66">            },</span>
+<span class="line" id="L67">        };</span>
+<span class="line" id="L68">        <span class="tok-kw">try</span> par.resolve_labels();</span>
+<span class="line" id="L69">        <span class="tok-kw">break</span> :par_block par;</span>
+<span class="line" id="L70">    };</span>
+<span class="line" id="L71">    <span class="tok-kw">try</span> testing.expectEqual(<span class="tok-builtin">@as</span>(<span class="tok-type">u10</span>, <span class="tok-number">0</span>), <span class="tok-kw">comptime</span> parser_1.parsed[<span class="tok-number">1</span>].data.Number);</span>
+<span class="line" id="L72">    <span class="tok-kw">try</span> testing.expectEqual(<span class="tok-builtin">@as</span>(<span class="tok-type">u10</span>, <span class="tok-number">1</span>), <span class="tok-kw">comptime</span> parser_1.parsed[<span class="tok-number">2</span>].data.Number);</span>
+<span class="line" id="L73">}</span>
+<span class="line" id="L74"></span>
+</code></pre></body>
+</html>

@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>parser/main.zig - source view</title>
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAPNJREFUeNpi/P//PwMlgOXHUjly9E0G4hwgZmQiQZMqEK8H4v9QzUEgQSaoADK+zhH9iAGL+C0gDoAaNg9mGLoLfgA1awK9hS9gzgJxA9RQBmQDrgMxJzRMGKE4HYj/Ial5A8QmQLwCJoBsgBYW2+TR1ChDaWt4LOBxKsi/VUh8XiD+gq4IVyzwQAMJBoKwacZlAB8Qf0bi96IZhtOAe1D6LpqaEiz6rmEzQAeIzwGxCJpieFqApo/vQKyJboAaEBsAsSEupwI1MwKjGBTVHOhegMX5UajYRqiBjMgYmj400cVh0XgTiKdC0zhJgJHS7AwQYABm9EAdCKrEfAAAAABJRU5ErkJggg=="/>
+    <style>
+      body{
+        font-family: system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      pre > code {
+        display: block;
+        overflow: auto;
+        line-height: normal;
+        margin: 0em;
+      }
+      .tok-kw {
+          color: #333;
+          font-weight: bold;
+      }
+      .tok-str {
+          color: #d14;
+      }
+      .tok-builtin {
+          color: #005C7A;
+      }
+      .tok-comment {
+          color: #545454;
+          font-style: italic;
+      }
+      .tok-fn {
+          color: #900;
+          font-weight: bold;
+      }
+      .tok-null {
+          color: #005C5C;
+      }
+      .tok-number {
+          color: #005C5C;
+      }
+      .tok-type {
+          color: #458;
+          font-weight: bold;
+      }
+      pre {
+        counter-reset: line;
+      }
+      pre .line:before {
+        counter-increment: line;
+        content: counter(line);
+        display: inline-block;
+        padding-right: 1em;
+        width: 2em;
+        text-align: right;
+        color: #999;
+      }
+      
+      .line {
+        width: 100%;
+        display: inline-block;
+      }
+      .line:target {
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        background: #fafafa;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body{
+            background:#222;
+            color: #ccc;
+        }
+        pre > code {
+            color: #ccc;
+            background: #222;
+            border: unset;
+        }
+        .line:target {
+            border-top: 1px solid #444;
+            border-bottom: 1px solid #444;
+            background: #333;
+        }
+        .tok-kw {
+            color: #eee;
+        }
+        .tok-str {
+            color: #2e5;
+        }
+        .tok-builtin {
+            color: #ff894c;
+        }
+        .tok-comment {
+            color: #aa7;
+        }
+        .tok-fn {
+            color: #B1A0F8;
+        }
+        .tok-null {
+            color: #ff8080;
+        }
+        .tok-number {
+            color: #ff8080;
+        }
+        .tok-type {
+            color: #68f;
+        }
+      }
+    </style>
+</head>
+<body>
+<pre><code><span class="line" id="L1"><span class="tok-kw">const</span> mem = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>).mem;</span>
+<span class="line" id="L2"></span>
+<span class="line" id="L3"><span class="tok-kw">pub</span> <span class="tok-kw">const</span> instruction = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;instruction/main.zig&quot;</span>);</span>
+<span class="line" id="L4"><span class="tok-kw">const</span> Instruction = instruction.Instruction;</span>
+<span class="line" id="L5"></span>
+<span class="line" id="L6"><span class="tok-kw">pub</span> <span class="tok-kw">const</span> Error = <span class="tok-kw">error</span>{</span>
+<span class="line" id="L7">    TooManyInstructions,</span>
+<span class="line" id="L8">} || instruction.Error;</span>
+<span class="line" id="L9"></span>
+<span class="line" id="L10"><span class="tok-comment">/// Assembly parser.</span></span>
+<span class="line" id="L11"><span class="tok-kw">pub</span> <span class="tok-kw">const</span> Parser = <span class="tok-kw">struct</span> {</span>
+<span class="line" id="L12">    n_parsed: <span class="tok-type">u7</span>,</span>
+<span class="line" id="L13">    parsed: [<span class="tok-number">100</span>]Instruction,</span>
+<span class="line" id="L14"></span>
+<span class="line" id="L15">    <span class="tok-comment">/// Create an empty parser.</span></span>
+<span class="line" id="L16">    <span class="tok-kw">pub</span> <span class="tok-kw">inline</span> <span class="tok-kw">fn</span> <span class="tok-fn">new</span>() <span class="tok-builtin">@This</span>() {</span>
+<span class="line" id="L17">        <span class="tok-kw">return</span> .{ .n_parsed = <span class="tok-number">0</span>, .parsed = <span class="tok-null">undefined</span> };</span>
+<span class="line" id="L18">    }</span>
+<span class="line" id="L19"></span>
+<span class="line" id="L20">    <span class="tok-comment">/// Parse one line.</span></span>
+<span class="line" id="L21">    <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">parse</span>(self: *<span class="tok-builtin">@This</span>(), line: []<span class="tok-kw">const</span> <span class="tok-type">u8</span>) Error!<span class="tok-type">void</span> {</span>
+<span class="line" id="L22">        <span class="tok-kw">const</span> inst = <span class="tok-kw">try</span> Instruction.parse(line) <span class="tok-kw">orelse</span> <span class="tok-kw">return</span>;</span>
+<span class="line" id="L23"></span>
+<span class="line" id="L24">        <span class="tok-kw">if</span> (self.n_parsed &gt;= <span class="tok-number">100</span>) <span class="tok-kw">return</span> <span class="tok-kw">error</span>.TooManyInstructions;</span>
+<span class="line" id="L25"></span>
+<span class="line" id="L26">        self.parsed[self.n_parsed] = inst;</span>
+<span class="line" id="L27">        self.n_parsed += <span class="tok-number">1</span>;</span>
+<span class="line" id="L28">    }</span>
+<span class="line" id="L29"></span>
+<span class="line" id="L30">    <span class="tok-comment">/// Create a new parser and parse the input string.</span></span>
+<span class="line" id="L31">    <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">from_str</span>(str: []<span class="tok-kw">const</span> <span class="tok-type">u8</span>) Error!<span class="tok-builtin">@This</span>() {</span>
+<span class="line" id="L32">        <span class="tok-kw">var</span> parser = <span class="tok-builtin">@This</span>().new();</span>
+<span class="line" id="L33">        <span class="tok-kw">var</span> iter = mem.splitAny(<span class="tok-type">u8</span>, str, <span class="tok-str">&quot;\n\r&quot;</span>);</span>
+<span class="line" id="L34"></span>
+<span class="line" id="L35">        <span class="tok-kw">while</span> (iter.next()) |line| <span class="tok-kw">try</span> parser.parse(line);</span>
+<span class="line" id="L36"></span>
+<span class="line" id="L37">        <span class="tok-kw">return</span> parser;</span>
+<span class="line" id="L38">    }</span>
+<span class="line" id="L39"></span>
+<span class="line" id="L40">    <span class="tok-comment">/// Resolve the labels in the data portion of an instruction.</span></span>
+<span class="line" id="L41">    <span class="tok-kw">pub</span> <span class="tok-kw">fn</span> <span class="tok-fn">resolve_labels</span>(self: *<span class="tok-builtin">@This</span>()) Error!<span class="tok-type">void</span> {</span>
+<span class="line" id="L42">        outer: <span class="tok-kw">for</span> (self.parsed[<span class="tok-number">0</span>..self.n_parsed]) |*inst| {</span>
+<span class="line" id="L43">            <span class="tok-kw">const</span> label = <span class="tok-kw">switch</span> (inst.data) {</span>
+<span class="line" id="L44">                .Label =&gt; inst.data.Label,</span>
+<span class="line" id="L45">                <span class="tok-kw">else</span> =&gt; <span class="tok-kw">continue</span>,</span>
+<span class="line" id="L46">            };</span>
+<span class="line" id="L47"></span>
+<span class="line" id="L48">            <span class="tok-kw">for</span> (self.parsed[<span class="tok-number">0</span>..self.n_parsed], <span class="tok-number">0</span>..) |inst2, index|</span>
+<span class="line" id="L49">                <span class="tok-kw">if</span> (mem.eql(<span class="tok-type">u8</span>, inst2.label <span class="tok-kw">orelse</span> <span class="tok-kw">continue</span>, label)) {</span>
+<span class="line" id="L50">                    inst.data = .{ .Number = <span class="tok-builtin">@truncate</span>(index) };</span>
+<span class="line" id="L51">                    <span class="tok-kw">continue</span> :outer;</span>
+<span class="line" id="L52">                };</span>
+<span class="line" id="L53"></span>
+<span class="line" id="L54">            <span class="tok-kw">return</span> <span class="tok-kw">error</span>.NoMatchingLabel;</span>
+<span class="line" id="L55">        }</span>
+<span class="line" id="L56">    }</span>
+<span class="line" id="L57">};</span>
+<span class="line" id="L58"></span>
+<span class="line" id="L59"><span class="tok-kw">test</span> {</span>
+<span class="line" id="L60">    <span class="tok-kw">const</span> testing = <span class="tok-builtin">@import</span>(<span class="tok-str">&quot;std&quot;</span>).testing;</span>
+<span class="line" id="L61"></span>
+<span class="line" id="L62">    <span class="tok-kw">try</span> testing.expectEqual(<span class="tok-number">0</span>, <span class="tok-kw">comptime</span> Parser.new().n_parsed);</span>
+<span class="line" id="L63"></span>
+<span class="line" id="L64">    <span class="tok-kw">const</span> program_str =</span>
+<span class="line" id="L65">        <span class="tok-str">\\ # This example outputs some of the Van Eck sequence</span></span>
+
+<span class="line" id="L66">        <span class="tok-str">\\ #  (https://oeis.org/A181391)</span></span>
+
+<span class="line" id="L67">        <span class="tok-str">\\ # Use the 'Run' button above to run it</span></span>
+
+<span class="line" id="L68">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L69">        <span class="tok-str">\\ loop    LDA current     # load and output the current value</span></span>
+
+<span class="line" id="L70">        <span class="tok-str">\\         OUT</span></span>
+
+<span class="line" id="L71">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L72">        <span class="tok-str">\\         ADD base_a      # translate that to the value's index address</span></span>
+
+<span class="line" id="L73">        <span class="tok-str">\\         STO c_addr</span></span>
+
+<span class="line" id="L74">        <span class="tok-str">\\         LDA c_addr</span></span>
+
+<span class="line" id="L75">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L76">        <span class="tok-str">\\         ADD sto_n       # make a store instruction from the index address</span></span>
+
+<span class="line" id="L77">        <span class="tok-str">\\         STO sto_c</span></span>
+
+<span class="line" id="L78">        <span class="tok-str">\\         ADD d_lda_n     # make a load instruction from the store instruction</span></span>
+
+<span class="line" id="L79">        <span class="tok-str">\\         STO lda_c</span></span>
+
+<span class="line" id="L80">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L81">        <span class="tok-str">\\         SUB lda_max     # make sure the index is not &gt; 99 (not load &gt; 599)</span></span>
+
+<span class="line" id="L82">        <span class="tok-str">\\         BRP exit</span></span>
+
+<span class="line" id="L83">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L84">        <span class="tok-str">\\         LDA counter     # increment the counter</span></span>
+
+<span class="line" id="L85">        <span class="tok-str">\\         ADD one</span></span>
+
+<span class="line" id="L86">        <span class="tok-str">\\         STO counter</span></span>
+
+<span class="line" id="L87">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L88">        <span class="tok-str">\\ lda_c   DAT 0           # (modified) load the last index of the current value</span></span>
+
+<span class="line" id="L89">        <span class="tok-str">\\         BRZ update      # if zero, skip to [update]</span></span>
+
+<span class="line" id="L90">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L91">        <span class="tok-str">\\         STO c_index     # calculate counter - last index</span></span>
+
+<span class="line" id="L92">        <span class="tok-str">\\         LDA counter</span></span>
+
+<span class="line" id="L93">        <span class="tok-str">\\         SUB c_index</span></span>
+
+<span class="line" id="L94">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L95">        <span class="tok-str">\\ update  STO current     # set as the next number</span></span>
+
+<span class="line" id="L96">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L97">        <span class="tok-str">\\         LDA counter     # load the counter</span></span>
+
+<span class="line" id="L98">        <span class="tok-str">\\ sto_c   DAT 0           # (modified) store as the last index of the (old) current number</span></span>
+
+<span class="line" id="L99">        <span class="tok-str">\\         BR loop         # go to the start of the loop</span></span>
+
+<span class="line" id="L100">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L101">        <span class="tok-str">\\ exit    HLT             # stop</span></span>
+
+<span class="line" id="L102">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L103">        <span class="tok-str">\\ # state</span></span>
+
+<span class="line" id="L104">        <span class="tok-str">\\ current DAT 0           # the current number</span></span>
+
+<span class="line" id="L105">        <span class="tok-str">\\ counter DAT 0           # the counter</span></span>
+
+<span class="line" id="L106">        <span class="tok-str">\\ c_addr  DAT 0           # the address of the last index of the current number</span></span>
+
+<span class="line" id="L107">        <span class="tok-str">\\ c_index DAT 0           # (cache) the last index of the current number</span></span>
+
+<span class="line" id="L108">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L109">        <span class="tok-str">\\ # constants</span></span>
+
+<span class="line" id="L110">        <span class="tok-str">\\ one     DAT 1</span></span>
+
+<span class="line" id="L111">        <span class="tok-str">\\ sto_n   DAT 300         # op code of STO</span></span>
+
+<span class="line" id="L112">        <span class="tok-str">\\ d_lda_n DAT 200         # op code of LDA - op code of STO</span></span>
+
+<span class="line" id="L113">        <span class="tok-str">\\ lda_max DAT 599         # max address + op code of LDA</span></span>
+
+<span class="line" id="L114">        <span class="tok-str">\\ </span></span>
+
+<span class="line" id="L115">        <span class="tok-str">\\ # base for last index storage</span></span>
+
+<span class="line" id="L116">        <span class="tok-str">\\ base_a  DAT base        # index of the base</span></span>
+
+<span class="line" id="L117">        <span class="tok-str">\\ base    DAT 0</span></span>
+
+<span class="line" id="L118">    ;</span>
+<span class="line" id="L119">    <span class="tok-kw">const</span> program = <span class="tok-kw">try</span> Parser.from_str(program_str);</span>
+<span class="line" id="L120">    <span class="tok-kw">try</span> testing.expectEqual(program.n_parsed, <span class="tok-number">34</span>);</span>
+<span class="line" id="L121">    <span class="tok-kw">try</span> testing.expectEqual(Instruction{ .label = <span class="tok-null">null</span>, .operation = .OUT, .data = .Empty }, program.parsed[<span class="tok-number">1</span>]);</span>
+<span class="line" id="L122">}</span>
+<span class="line" id="L123"></span>
+</code></pre></body>
+</html>
